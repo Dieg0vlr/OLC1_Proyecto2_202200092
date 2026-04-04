@@ -1,0 +1,25 @@
+{
+  "name": "olc1_proyecto2_202200092",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dieg0vlr/OLC1_Proyecto2_202200092.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dieg0vlr/OLC1_Proyecto2_202200092/issues"
+  },
+  "homepage": "https://github.com/Dieg0vlr/OLC1_Proyecto2_202200092#readme",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  }
+}
