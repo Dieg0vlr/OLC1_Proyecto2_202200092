@@ -4,13 +4,17 @@ import { Entorno } from './entorno/Entorno';
 
 // sentencias de GoScript reales
 const entrada = `
-fmt.Println("--- PRUEBAS LOGICAS Y RELACIONALES ---");
-fmt.Println("5 > 3 es:", 5 > 3);
-fmt.Println("10 == 10 es:", 10 == 10);
-fmt.Println("10 != 10 es:", 10 != 10);
-fmt.Println("true && false es:", true && false);
-fmt.Println("!false es:", !false);
-fmt.Println("Combinado:", (5 >= 5) || (10 < 2));
+var nota int = 85;
+
+if nota >= 90 {
+    fmt.Println("Excelente, sacaste A");
+} else if nota >= 80 {
+    fmt.Println("Muy bien, sacaste B");
+} else if nota >= 61 {
+    fmt.Println("Aprobado");
+} else {
+    fmt.Println("A repetir el curso :(");
+}
 `;
 
 try {

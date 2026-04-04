@@ -16,6 +16,9 @@
 "fmt.Println"         return 'R_PRINT';
 "true"                return 'R_TRUE';
 "false"               return 'R_FALSE';
+"if"                  return 'R_IF';
+"else"                return 'R_ELSE';
+
 "=="                  return 'IGUAL_IGUAL';
 "!="                  return 'DISTINTO';
 "<="                  return 'MENOR_IGUAL';
@@ -60,6 +63,7 @@
     const { AccesoVariable } = require('../ast/AccesoVariable');
     const { Relacional, OperadorRelacional } = require('../ast/Relacional');
     const { Logica, OperadorLogico } = require('../ast/Logica');
+    const { If } = require('../ast/If');
 %}
 
 %left 'FIN'
@@ -84,15 +88,27 @@ Instrucciones
     | Instruccion               { $$ = [$1]; }
     ;
 
+InstruccionesBloque
+    : Instrucciones { $$ = $1; }
+    | /* EPSILON - Bloque vacio */ { $$ = []; }
+    ;
+
 Instruccion
-    : R_FUNC R_MAIN PAR_A PAR_C LLAVE_A Instrucciones LLAVE_C { $$ = { tipo: 'MAIN', instrucciones: $6 }; }
+    : R_FUNC R_MAIN PAR_A PAR_C LLAVE_A InstruccionesBloque LLAVE_C { $$ = { tipo: 'MAIN', instrucciones: $6 }; }
     | Declaracion { $$ = $1; }
+    | EstructuraIf { $$ = $1; }
     | R_PRINT PAR_A ListaExpresiones PAR_C PTCOMA { $$ = new Print(@1.first_line, @1.first_column, $3); }
     | R_PRINT PAR_A ListaExpresiones PAR_C %prec FIN { $$ = new Print(@1.first_line, @1.first_column, $3); }
     | R_PRINT PAR_A PAR_C PTCOMA { $$ = new Print(@1.first_line, @1.first_column, []); }
     | R_PRINT PAR_A PAR_C %prec FIN { $$ = new Print(@1.first_line, @1.first_column, []); }
     | Expresion PTCOMA { $$ = $1; }
     | Expresion %prec FIN { $$ = $1; } 
+    ;
+
+EstructuraIf
+    : R_IF Expresion LLAVE_A InstruccionesBloque LLAVE_C { $$ = new If(@1.first_line, @1.first_column, $2, $4); }
+    | R_IF Expresion LLAVE_A InstruccionesBloque LLAVE_C R_ELSE LLAVE_A InstruccionesBloque LLAVE_C { $$ = new If(@1.first_line, @1.first_column, $2, $4, $8); }
+    | R_IF Expresion LLAVE_A InstruccionesBloque LLAVE_C R_ELSE EstructuraIf { $$ = new If(@1.first_line, @1.first_column, $2, $4, $7); }
     ;
 
 Declaracion

@@ -31,4 +31,6 @@ export class Entorno {
         // Si termina el ciclo y no la encontro, la variable no existe
         return null;
     }
+
+    
 }
