@@ -1,3 +1,4 @@
+// src/ast/Print.ts
 import { Instruccion } from './Instruccion';
 import { Entorno } from '../entorno/Entorno';
 
@@ -15,10 +16,11 @@ export class Print implements Instruccion {
     interpretar(entorno: Entorno, arbol: any): any {
         let salida = "";
 
-        for (let i = 0; i < this.expresiones.length; i++) {
-            const resultado = this.expresiones[i].interpretar(entorno, arbol);
-            salida += String(resultado.valor) + (i === this.expresiones.length - 1 ? "" : " ");
-        }
+        this.expresiones.forEach((exp, index) => {
+            const resultado = exp.interpretar(entorno, arbol);
+            // Concatenamos los resultados con un espacio de por medio
+            salida += String(resultado.valor) + (index === this.expresiones.length - 1 ? "" : " ");
+        });
 
         console.log(salida);
         return null;

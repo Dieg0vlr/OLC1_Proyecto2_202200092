@@ -28,6 +28,7 @@
 "{"                   return 'LLAVE_A';
 "}"                   return 'LLAVE_C';
 
+\"[^\"]*\"            { yytext = yytext.slice(1, -1); return 'CADENA'; }
 [0-9]+("."[0-9]+)\b   return 'DECIMAL';
 [0-9]+\b              return 'ENTERO';
 [a-zA-Z_][a-zA-Z0-9_]* return 'ID';
@@ -103,4 +104,5 @@ Expresion
     | ENTERO                        { $$ = new Literal(@1.first_line, @1.first_column, Number($1), TipoDato.INT); }
     | DECIMAL                       { $$ = new Literal(@1.first_line, @1.first_column, Number($1), TipoDato.FLOAT); }
     | ID                            { $$ = new AccesoVariable(@1.first_line, @1.first_column, $1); }
+    | CADENA                        { $$ = new Literal(@1.first_line, @1.first_column, $1, TipoDato.STRING); }
     ;
