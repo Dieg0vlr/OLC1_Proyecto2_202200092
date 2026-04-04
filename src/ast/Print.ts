@@ -1,4 +1,3 @@
-// src/ast/Print.ts
 import { Instruccion } from './Instruccion';
 import { Entorno } from '../entorno/Entorno';
 

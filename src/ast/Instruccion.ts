@@ -1,18 +1,18 @@
 export interface Instruccion {
     /**
-     * El número de línea donde se encuentra la instrucción (útil para reportar errores)
+     * El numero de linea donde se encuentra la instrucción (útil para reportar errores)
      */
     linea: number;
     
     /**
-     * La columna donde se encuentra la instrucción
+     * La columna donde se encuentra la instruccion
      */
     columna: number;
 
     /**
-     * Método principal que ejecutará la lógica de este nodo
-     * @param entorno La tabla de símbolos actual (variables, funciones, etc.)
-     * @param arbol El objeto global que guarda la consola, errores, etc.
+     * Metodo principal que ejecutara la logica de este nodo
+     * @param entorno La tabla de simbolos actual, variables, funciones, etc
+     * @param arbol El objeto global que guarda la consola, errores, etc
      */
     interpretar(entorno: any, arbol: any): any;
 }

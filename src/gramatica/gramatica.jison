@@ -14,6 +14,17 @@
 "int"                 return 'R_INT';
 "float64"             return 'R_FLOAT64';
 "fmt.Println"         return 'R_PRINT';
+"true"                return 'R_TRUE';
+"false"               return 'R_FALSE';
+"=="                  return 'IGUAL_IGUAL';
+"!="                  return 'DISTINTO';
+"<="                  return 'MENOR_IGUAL';
+">="                  return 'MAYOR_IGUAL';
+"<"                   return 'MENOR';
+">"                   return 'MAYOR';
+"&&"                  return 'AND';
+"||"                  return 'OR';
+"!"                   return 'NOT';
 
 "+"                   return 'MAS';
 "-"                   return 'MENOS';
@@ -47,12 +58,18 @@
     const { Declaracion } = require('../ast/Declaracion');
     const { Print } = require('../ast/Print');
     const { AccesoVariable } = require('../ast/AccesoVariable');
+    const { Relacional, OperadorRelacional } = require('../ast/Relacional');
+    const { Logica, OperadorLogico } = require('../ast/Logica');
 %}
 
 %left 'FIN'
+%left 'OR'
+%left 'AND'
+%left 'IGUAL_IGUAL' 'DISTINTO'
+%left 'MAYOR' 'MENOR' 'MAYOR_IGUAL' 'MENOR_IGUAL'
 %left 'MAS' 'MENOS'
 %left 'POR' 'DIVIDIDO' 'MODULO'
-%right UMENOS 
+%right UMENOS 'NOT'
 
 %start Inicio
 
@@ -105,4 +122,15 @@ Expresion
     | DECIMAL                       { $$ = new Literal(@1.first_line, @1.first_column, Number($1), TipoDato.FLOAT); }
     | ID                            { $$ = new AccesoVariable(@1.first_line, @1.first_column, $1); }
     | CADENA                        { $$ = new Literal(@1.first_line, @1.first_column, $1, TipoDato.STRING); }
+    | Expresion MAYOR Expresion     { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.MAYOR, $1, $3); }
+    | Expresion MENOR Expresion     { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.MENOR, $1, $3); }
+    | Expresion MAYOR_IGUAL Expresion { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.MAYOR_IGUAL, $1, $3); }
+    | Expresion MENOR_IGUAL Expresion { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.MENOR_IGUAL, $1, $3); }
+    | Expresion IGUAL_IGUAL Expresion { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.IGUAL, $1, $3); }
+    | Expresion DISTINTO Expresion  { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.DISTINTO, $1, $3); }
+    | Expresion AND Expresion       { $$ = new Logica(@1.first_line, @1.first_column, OperadorLogico.AND, $1, $3); }
+    | Expresion OR Expresion        { $$ = new Logica(@1.first_line, @1.first_column, OperadorLogico.OR, $1, $3); }
+    | NOT Expresion                 { $$ = new Logica(@1.first_line, @1.first_column, OperadorLogico.NOT, $2); }
+    | R_TRUE                        { $$ = new Literal(@1.first_line, @1.first_column, true, TipoDato.BOOL); }
+    | R_FALSE                       { $$ = new Literal(@1.first_line, @1.first_column, false, TipoDato.BOOL); }
     ;

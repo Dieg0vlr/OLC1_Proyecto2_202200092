@@ -4,10 +4,13 @@ import { Entorno } from './entorno/Entorno';
 
 // sentencias de GoScript reales
 const entrada = `
-var a int = 10;
-var b float64 = 2.5;
-fmt.Println(a);
-fmt.Println("El resultado de sumar a y b es", a + b);
+fmt.Println("--- PRUEBAS LOGICAS Y RELACIONALES ---");
+fmt.Println("5 > 3 es:", 5 > 3);
+fmt.Println("10 == 10 es:", 10 == 10);
+fmt.Println("10 != 10 es:", 10 != 10);
+fmt.Println("true && false es:", true && false);
+fmt.Println("!false es:", !false);
+fmt.Println("Combinado:", (5 >= 5) || (10 < 2));
 `;
 
 try {
