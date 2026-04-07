@@ -4,17 +4,23 @@ import { Entorno } from './entorno/Entorno';
 
 // sentencias de GoScript reales
 const entrada = `
-var nota int = 85;
+fmt.Println("--- INICIANDO CICLO FOR ---");
 
-if nota >= 90 {
-    fmt.Println("Excelente, sacaste A");
-} else if nota >= 80 {
-    fmt.Println("Muy bien, sacaste B");
-} else if nota >= 61 {
-    fmt.Println("Aprobado");
-} else {
-    fmt.Println("A repetir el curso :(");
+for var i int = 1; i <= 10; i++ {
+    if i == 3 {
+        fmt.Println("Saltando el numero 3...");
+        continue;
+    }
+
+    if i == 8 {
+        fmt.Println("Me detengo en el 8!");
+        break;
+    }
+
+    fmt.Println("El valor de i es:", i);
 }
+
+fmt.Println("--- CICLO TERMINADO ---");
 `;
 
 try {

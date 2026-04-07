@@ -18,6 +18,9 @@
 "false"               return 'R_FALSE';
 "if"                  return 'R_IF';
 "else"                return 'R_ELSE';
+"for"                 return 'R_FOR';
+"break"               return 'R_BREAK';
+"continue"            return 'R_CONTINUE';
 
 "=="                  return 'IGUAL_IGUAL';
 "!="                  return 'DISTINTO';
@@ -29,6 +32,8 @@
 "||"                  return 'OR';
 "!"                   return 'NOT';
 
+"++"                  return 'MAS_MAS';
+"--"                  return 'MENOS_MENOS';
 "+"                   return 'MAS';
 "-"                   return 'MENOS';
 "*"                   return 'POR';
@@ -59,11 +64,16 @@
     const { Literal } = require('../ast/Literal');
     const { TipoDato } = require('../entorno/Tipo');
     const { Declaracion } = require('../ast/Declaracion');
+    const { Asignacion } = require('../ast/Asignacion');
     const { Print } = require('../ast/Print');
     const { AccesoVariable } = require('../ast/AccesoVariable');
     const { Relacional, OperadorRelacional } = require('../ast/Relacional');
     const { Logica, OperadorLogico } = require('../ast/Logica');
     const { If } = require('../ast/If');
+    const { For } = require('../ast/For');
+    const { Break } = require('../ast/Break');
+    const { Continue } = require('../ast/Continue');
+    const { Incremento } = require('../ast/Incremento');
 %}
 
 %left 'FIN'
@@ -90,17 +100,26 @@ Instrucciones
 
 InstruccionesBloque
     : Instrucciones { $$ = $1; }
-    | /* EPSILON - Bloque vacio */ { $$ = []; }
+    | /* EPSILON */ { $$ = []; }
     ;
 
 Instruccion
     : R_FUNC R_MAIN PAR_A PAR_C LLAVE_A InstruccionesBloque LLAVE_C { $$ = { tipo: 'MAIN', instrucciones: $6 }; }
     | Declaracion { $$ = $1; }
+    | ID IGUAL Expresion PTCOMA { $$ = new Asignacion(@1.first_line, @1.first_column, $1, $3); }
+    | ID IGUAL Expresion %prec FIN { $$ = new Asignacion(@1.first_line, @1.first_column, $1, $3); }
     | EstructuraIf { $$ = $1; }
+    | EstructuraFor { $$ = $1; }
+    | R_BREAK PTCOMA { $$ = new Break(@1.first_line, @1.first_column); }
+    | R_BREAK %prec FIN { $$ = new Break(@1.first_line, @1.first_column); }
+    | R_CONTINUE PTCOMA { $$ = new Continue(@1.first_line, @1.first_column); }
+    | R_CONTINUE %prec FIN { $$ = new Continue(@1.first_line, @1.first_column); }
+    | ID MAS_MAS PTCOMA { $$ = new Incremento(@1.first_line, @1.first_column, $1, '++'); }
+    | ID MAS_MAS %prec FIN { $$ = new Incremento(@1.first_line, @1.first_column, $1, '++'); }
+    | ID MENOS_MENOS PTCOMA { $$ = new Incremento(@1.first_line, @1.first_column, $1, '--'); }
+    | ID MENOS_MENOS %prec FIN { $$ = new Incremento(@1.first_line, @1.first_column, $1, '--'); }
     | R_PRINT PAR_A ListaExpresiones PAR_C PTCOMA { $$ = new Print(@1.first_line, @1.first_column, $3); }
     | R_PRINT PAR_A ListaExpresiones PAR_C %prec FIN { $$ = new Print(@1.first_line, @1.first_column, $3); }
-    | R_PRINT PAR_A PAR_C PTCOMA { $$ = new Print(@1.first_line, @1.first_column, []); }
-    | R_PRINT PAR_A PAR_C %prec FIN { $$ = new Print(@1.first_line, @1.first_column, []); }
     | Expresion PTCOMA { $$ = $1; }
     | Expresion %prec FIN { $$ = $1; } 
     ;
@@ -109,6 +128,18 @@ EstructuraIf
     : R_IF Expresion LLAVE_A InstruccionesBloque LLAVE_C { $$ = new If(@1.first_line, @1.first_column, $2, $4); }
     | R_IF Expresion LLAVE_A InstruccionesBloque LLAVE_C R_ELSE LLAVE_A InstruccionesBloque LLAVE_C { $$ = new If(@1.first_line, @1.first_column, $2, $4, $8); }
     | R_IF Expresion LLAVE_A InstruccionesBloque LLAVE_C R_ELSE EstructuraIf { $$ = new If(@1.first_line, @1.first_column, $2, $4, $7); }
+    ;
+
+EstructuraFor
+    : R_FOR Expresion LLAVE_A InstruccionesBloque LLAVE_C { $$ = new For(@1.first_line, @1.first_column, $2, $4); }
+    | R_FOR InstruccionFor PTCOMA Expresion PTCOMA InstruccionFor LLAVE_A InstruccionesBloque LLAVE_C { $$ = new For(@1.first_line, @1.first_column, $4, $8, $2, $6); }
+    ;
+
+InstruccionFor
+    : R_VAR ID Tipo IGUAL Expresion { $$ = new Declaracion(@1.first_line, @1.first_column, $2, $3, $5); }
+    | ID IGUAL Expresion { $$ = new Asignacion(@1.first_line, @1.first_column, $1, $3); }
+    | ID MAS_MAS { $$ = new Incremento(@1.first_line, @1.first_column, $1, '++'); }
+    | ID MENOS_MENOS { $$ = new Incremento(@1.first_line, @1.first_column, $1, '--'); }
     ;
 
 Declaracion

@@ -27,9 +27,21 @@ export class Entorno {
             // Si no esta aca, busco en el entorno superior
             entornoActual = entornoActual.anterior;
         }
-        
-        // Si termina el ciclo y no la encontro, la variable no existe
         return null;
+    }
+
+    public actualizar(id: string, simbolo: Simbolo): boolean {
+        let entornoActual: Entorno | null = this;
+        
+        while (entornoActual != null) {
+            if (entornoActual.tabla.has(id)) {
+                entornoActual.tabla.set(id, simbolo);
+                return true;
+            }
+            entornoActual = entornoActual.anterior;
+        }
+        
+        return false;
     }
 
     

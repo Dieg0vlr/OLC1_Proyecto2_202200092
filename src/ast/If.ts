@@ -26,22 +26,23 @@ export class If implements Instruccion {
         }
 
         if (cond.valor === true) {
-            //crea un entorno local y ejecuta
             const entornoLocal = new Entorno(entorno);
             for (const instruccion of this.instruccionesIf) {
-                instruccion.interpretar(entornoLocal, arbol);
+                const res = instruccion.interpretar(entornoLocal, arbol);
+                if (res?.tipo === 'BREAK' || res?.tipo === 'CONTINUE' || res?.tipo === 'RETURN') return res;
             }
         } else if (this.instruccionesElse !== null) {
-            // Si hay un "else if" encadenado
             if (this.instruccionesElse instanceof If) {
-                this.instruccionesElse.interpretar(entorno, arbol);
+                return this.instruccionesElse.interpretar(entorno, arbol);
             } else {
-                // Si es un "else" normal
                 const entornoLocal = new Entorno(entorno);
                 for (const instruccion of this.instruccionesElse as Instruccion[]) {
-                    instruccion.interpretar(entornoLocal, arbol);
+                    const res = instruccion.interpretar(entornoLocal, arbol);
+                    if (res?.tipo === 'BREAK' || res?.tipo === 'CONTINUE' || res?.tipo === 'RETURN') return res;
                 }
             }
         }
     }
+
+
 }
