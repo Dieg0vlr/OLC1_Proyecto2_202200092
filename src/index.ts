@@ -4,18 +4,17 @@ import { Entorno } from './entorno/Entorno';
 
 // sentencias de GoScript reales
 const entrada = `
-var numero int = 2;
+fmt.Println("--- FUNCIONES DE SLICE ---");
 
-switch numero {
-    case 1:
-        fmt.Println("Uno");
-    case 2:
-        fmt.Println("Dos");
-    case 3:
-        fmt.Println("Tres");
-    default:
-        fmt.Println("Número inválido");
-}
+var numeros []int = []int{10, 20, 30, 40};
+fmt.Println("Longitud del slice numeros:", len(numeros));
+fmt.Println("Buscando el valor 30 (Indice):", slices.Index(numeros, 30));
+
+numeros = append(numeros, 50);
+fmt.Println("Slice despues de append:", numeros);
+
+var palabras []string = []string{"hola", "mundo", "goScript"};
+fmt.Println("Join de palabras:", strings.Join(palabras, "-"));
 `;
 
 try {

@@ -17,8 +17,14 @@ export class Print implements Instruccion {
 
         this.expresiones.forEach((exp, index) => {
             const resultado = exp.interpretar(entorno, arbol);
-            // Concatenamos los resultados con un espacio de por medio
-            salida += String(resultado.valor) + (index === this.expresiones.length - 1 ? "" : " ");
+            let valorAImprimir = resultado.valor;
+
+            // Si es un arreglo (Slice), le pongo formato de GoScript
+            if (Array.isArray(valorAImprimir)) {
+                valorAImprimir = "[" + valorAImprimir.join(" ") + "]";
+            }
+
+            salida += String(valorAImprimir) + (index === this.expresiones.length - 1 ? "" : " ");
         });
 
         console.log(salida);

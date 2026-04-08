@@ -13,6 +13,7 @@
 "var"                 return 'R_VAR';
 "int"                 return 'R_INT';
 "float64"             return 'R_FLOAT64';
+"string"              return 'R_STRING';
 "fmt.Println"         return 'R_PRINT';
 "true"                return 'R_TRUE';
 "false"               return 'R_FALSE';
@@ -24,6 +25,10 @@
 "switch"              return 'R_SWITCH';
 "case"                return 'R_CASE';
 "default"             return 'R_DEFAULT';
+"len"                 return 'R_LEN';
+"append"              return 'R_APPEND';
+"slices.Index"        return 'R_SLICES_INDEX';
+"strings.Join"        return 'R_STRINGS_JOIN';
 
 "=="                  return 'IGUAL_IGUAL';
 "!="                  return 'DISTINTO';
@@ -48,6 +53,8 @@
 ","                   return 'COMA';
 "("                   return 'PAR_A';
 ")"                   return 'PAR_C';
+"["                   return 'CORCHE_A';
+"]"                   return 'CORCHE_C';
 "{"                   return 'LLAVE_A';
 "}"                   return 'LLAVE_C';
 
@@ -80,6 +87,13 @@
     const { Incremento } = require('../ast/Incremento');
     const { Switch } = require('../ast/Switch');
     const { Caso } = require('../ast/Caso');
+    const { Slice } = require('../ast/Slice');
+    const { AccesoSlice } = require('../ast/AccesoSlice');
+    const { ModificacionSlice } = require('../ast/ModificacionSlice');
+    const { Len } = require('../ast/Len');
+    const { Append } = require('../ast/Append');
+    const { SlicesIndex } = require('../ast/SlicesIndex');
+    const { StringsJoin } = require('../ast/StringsJoin');
 %}
 
 %left 'FIN'
@@ -90,6 +104,7 @@
 %left 'MAS' 'MENOS'
 %left 'POR' 'DIVIDIDO' 'MODULO'
 %right UMENOS 'NOT'
+%left 'CORCHE_A' 'CORCHE_C'
 
 %start Inicio
 
@@ -114,6 +129,8 @@ Instruccion
     | Declaracion { $$ = $1; }
     | ID IGUAL Expresion PTCOMA { $$ = new Asignacion(@1.first_line, @1.first_column, $1, $3); }
     | ID IGUAL Expresion %prec FIN { $$ = new Asignacion(@1.first_line, @1.first_column, $1, $3); }
+    | ID CORCHE_A Expresion CORCHE_C IGUAL Expresion PTCOMA { $$ = new ModificacionSlice(@1.first_line, @1.first_column, $1, $3, $6); }
+    | ID CORCHE_A Expresion CORCHE_C IGUAL Expresion %prec FIN { $$ = new ModificacionSlice(@1.first_line, @1.first_column, $1, $3, $6); }
     | EstructuraIf { $$ = $1; }
     | EstructuraFor { $$ = $1; }
     | EstructuraSwitch { $$ = $1; }
@@ -177,6 +194,8 @@ ListaExpresiones
 Tipo
     : R_INT { $$ = TipoDato.INT; }
     | R_FLOAT64 { $$ = TipoDato.FLOAT; }
+    | R_STRING { $$ = TipoDato.STRING; }
+    | CORCHE_A CORCHE_C Tipo { $$ = $3; }
     ;
 
 Expresion
@@ -191,6 +210,12 @@ Expresion
     | DECIMAL                       { $$ = new Literal(@1.first_line, @1.first_column, Number($1), TipoDato.FLOAT); }
     | ID                            { $$ = new AccesoVariable(@1.first_line, @1.first_column, $1); }
     | CADENA                        { $$ = new Literal(@1.first_line, @1.first_column, $1, TipoDato.STRING); }
+    | CORCHE_A CORCHE_C Tipo LLAVE_A ListaExpresiones LLAVE_C { $$ = new Slice(@1.first_line, @1.first_column, $3, $5); }
+    | ID CORCHE_A Expresion CORCHE_C { $$ = new AccesoSlice(@1.first_line, @1.first_column, $1, $3); }
+    | R_LEN PAR_A Expresion PAR_C { $$ = new Len(@1.first_line, @1.first_column, $3); }
+    | R_APPEND PAR_A Expresion COMA Expresion PAR_C { $$ = new Append(@1.first_line, @1.first_column, $3, $5); }
+    | R_SLICES_INDEX PAR_A Expresion COMA Expresion PAR_C { $$ = new SlicesIndex(@1.first_line, @1.first_column, $3, $5); }
+    | R_STRINGS_JOIN PAR_A Expresion COMA Expresion PAR_C { $$ = new StringsJoin(@1.first_line, @1.first_column, $3, $5); }
     | Expresion MAYOR Expresion     { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.MAYOR, $1, $3); }
     | Expresion MENOR Expresion     { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.MENOR, $1, $3); }
     | Expresion MAYOR_IGUAL Expresion { $$ = new Relacional(@1.first_line, @1.first_column, OperadorRelacional.MAYOR_IGUAL, $1, $3); }
