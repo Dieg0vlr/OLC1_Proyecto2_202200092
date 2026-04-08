@@ -21,6 +21,9 @@
 "for"                 return 'R_FOR';
 "break"               return 'R_BREAK';
 "continue"            return 'R_CONTINUE';
+"switch"              return 'R_SWITCH';
+"case"                return 'R_CASE';
+"default"             return 'R_DEFAULT';
 
 "=="                  return 'IGUAL_IGUAL';
 "!="                  return 'DISTINTO';
@@ -40,6 +43,7 @@
 "/"                   return 'DIVIDIDO';
 "%"                   return 'MODULO';
 "="                   return 'IGUAL';
+":"                   return 'DOS_PUNTOS';
 ";"                   return 'PTCOMA';
 ","                   return 'COMA';
 "("                   return 'PAR_A';
@@ -74,6 +78,8 @@
     const { Break } = require('../ast/Break');
     const { Continue } = require('../ast/Continue');
     const { Incremento } = require('../ast/Incremento');
+    const { Switch } = require('../ast/Switch');
+    const { Caso } = require('../ast/Caso');
 %}
 
 %left 'FIN'
@@ -110,6 +116,7 @@ Instruccion
     | ID IGUAL Expresion %prec FIN { $$ = new Asignacion(@1.first_line, @1.first_column, $1, $3); }
     | EstructuraIf { $$ = $1; }
     | EstructuraFor { $$ = $1; }
+    | EstructuraSwitch { $$ = $1; }
     | R_BREAK PTCOMA { $$ = new Break(@1.first_line, @1.first_column); }
     | R_BREAK %prec FIN { $$ = new Break(@1.first_line, @1.first_column); }
     | R_CONTINUE PTCOMA { $$ = new Continue(@1.first_line, @1.first_column); }
@@ -140,6 +147,21 @@ InstruccionFor
     | ID IGUAL Expresion { $$ = new Asignacion(@1.first_line, @1.first_column, $1, $3); }
     | ID MAS_MAS { $$ = new Incremento(@1.first_line, @1.first_column, $1, '++'); }
     | ID MENOS_MENOS { $$ = new Incremento(@1.first_line, @1.first_column, $1, '--'); }
+    ;
+
+EstructuraSwitch
+    : R_SWITCH Expresion LLAVE_A ListaCasos LLAVE_C { $$ = new Switch(@1.first_line, @1.first_column, $2, $4); }
+    | R_SWITCH Expresion LLAVE_A LLAVE_C { $$ = new Switch(@1.first_line, @1.first_column, $2, []); }
+    ;
+
+ListaCasos
+    : ListaCasos Caso { $1.push($2); $$ = $1; }
+    | Caso { $$ = [$1]; }
+    ;
+
+Caso
+    : R_CASE Expresion DOS_PUNTOS InstruccionesBloque { $$ = new Caso($2, $4); }
+    | R_DEFAULT DOS_PUNTOS InstruccionesBloque { $$ = new Caso(null, $3); }
     ;
 
 Declaracion

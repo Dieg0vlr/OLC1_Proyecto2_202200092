@@ -4,23 +4,18 @@ import { Entorno } from './entorno/Entorno';
 
 // sentencias de GoScript reales
 const entrada = `
-fmt.Println("--- INICIANDO CICLO FOR ---");
+var numero int = 2;
 
-for var i int = 1; i <= 10; i++ {
-    if i == 3 {
-        fmt.Println("Saltando el numero 3...");
-        continue;
-    }
-
-    if i == 8 {
-        fmt.Println("Me detengo en el 8!");
-        break;
-    }
-
-    fmt.Println("El valor de i es:", i);
+switch numero {
+    case 1:
+        fmt.Println("Uno");
+    case 2:
+        fmt.Println("Dos");
+    case 3:
+        fmt.Println("Tres");
+    default:
+        fmt.Println("Número inválido");
 }
-
-fmt.Println("--- CICLO TERMINADO ---");
 `;
 
 try {
