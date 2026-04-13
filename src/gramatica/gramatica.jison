@@ -14,6 +14,7 @@
 "int"                 return 'R_INT';
 "float64"             return 'R_FLOAT64';
 "string"              return 'R_STRING';
+"bool"                return 'R_BOOL';
 "fmt.Println"         return 'R_PRINT';
 "true"                return 'R_TRUE';
 "false"               return 'R_FALSE';
@@ -29,6 +30,7 @@
 "append"              return 'R_APPEND';
 "slices.Index"        return 'R_SLICES_INDEX';
 "strings.Join"        return 'R_STRINGS_JOIN';
+"struct"              return 'R_STRUCT';
 
 "=="                  return 'IGUAL_IGUAL';
 "!="                  return 'DISTINTO';
@@ -57,6 +59,7 @@
 "]"                   return 'CORCHE_C';
 "{"                   return 'LLAVE_A';
 "}"                   return 'LLAVE_C';
+"."                   return 'PUNTO';
 
 \"[^\"]*\"            { yytext = yytext.slice(1, -1); return 'CADENA'; }
 [0-9]+("."[0-9]+)\b   return 'DECIMAL';
@@ -94,6 +97,10 @@
     const { Append } = require('../ast/Append');
     const { SlicesIndex } = require('../ast/SlicesIndex');
     const { StringsJoin } = require('../ast/StringsJoin');
+    const { DeclaracionStruct } = require('../ast/DeclaracionStruct');
+    const { InstanciaStruct } = require('../ast/InstanciaStruct');
+    const { AccesoStruct } = require('../ast/AccesoStruct');
+    const { ModificacionStruct } = require('../ast/ModificacionStruct');
 %}
 
 %left 'FIN'
@@ -104,6 +111,7 @@
 %left 'MAS' 'MENOS'
 %left 'POR' 'DIVIDIDO' 'MODULO'
 %right UMENOS 'NOT'
+%left 'PUNTO'
 %left 'CORCHE_A' 'CORCHE_C'
 
 %start Inicio
@@ -131,6 +139,11 @@ Instruccion
     | ID IGUAL Expresion %prec FIN { $$ = new Asignacion(@1.first_line, @1.first_column, $1, $3); }
     | ID CORCHE_A Expresion CORCHE_C IGUAL Expresion PTCOMA { $$ = new ModificacionSlice(@1.first_line, @1.first_column, $1, $3, $6); }
     | ID CORCHE_A Expresion CORCHE_C IGUAL Expresion %prec FIN { $$ = new ModificacionSlice(@1.first_line, @1.first_column, $1, $3, $6); }
+    | R_STRUCT ID LLAVE_A ListaAtributosStruct LLAVE_C { $$ = new DeclaracionStruct(@1.first_line, @1.first_column, $2, $4); }
+    | ID PUNTO ID IGUAL Expresion PTCOMA { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1, $3, $5); }
+    | ID PUNTO ID IGUAL Expresion %prec FIN { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1, $3, $5); }
+    | ID ID IGUAL LLAVE_A ListaValoresStruct LLAVE_C PTCOMA { $$ = new Declaracion(@1.first_line, @1.first_column, $2, TipoDato.STRUCT, new InstanciaStruct(@1.first_line, @1.first_column, $1, $5)); }
+    | ID ID IGUAL LLAVE_A ListaValoresStruct LLAVE_C %prec FIN { $$ = new Declaracion(@1.first_line, @1.first_column, $2, TipoDato.STRUCT, new InstanciaStruct(@1.first_line, @1.first_column, $1, $5)); }
     | EstructuraIf { $$ = $1; }
     | EstructuraFor { $$ = $1; }
     | EstructuraSwitch { $$ = $1; }
@@ -195,6 +208,7 @@ Tipo
     : R_INT { $$ = TipoDato.INT; }
     | R_FLOAT64 { $$ = TipoDato.FLOAT; }
     | R_STRING { $$ = TipoDato.STRING; }
+    | R_BOOL { $$ = TipoDato.BOOL; }
     | CORCHE_A CORCHE_C Tipo { $$ = $3; }
     ;
 
@@ -212,6 +226,8 @@ Expresion
     | CADENA                        { $$ = new Literal(@1.first_line, @1.first_column, $1, TipoDato.STRING); }
     | CORCHE_A CORCHE_C Tipo LLAVE_A ListaExpresiones LLAVE_C { $$ = new Slice(@1.first_line, @1.first_column, $3, $5); }
     | ID CORCHE_A Expresion CORCHE_C { $$ = new AccesoSlice(@1.first_line, @1.first_column, $1, $3); }
+    | ID PUNTO ID { $$ = new AccesoStruct(@1.first_line, @1.first_column, $1, $3); }
+    | ID LLAVE_A ListaValoresStruct LLAVE_C { $$ = new InstanciaStruct(@1.first_line, @1.first_column, $1, $3); }
     | R_LEN PAR_A Expresion PAR_C { $$ = new Len(@1.first_line, @1.first_column, $3); }
     | R_APPEND PAR_A Expresion COMA Expresion PAR_C { $$ = new Append(@1.first_line, @1.first_column, $3, $5); }
     | R_SLICES_INDEX PAR_A Expresion COMA Expresion PAR_C { $$ = new SlicesIndex(@1.first_line, @1.first_column, $3, $5); }
@@ -227,4 +243,28 @@ Expresion
     | NOT Expresion                 { $$ = new Logica(@1.first_line, @1.first_column, OperadorLogico.NOT, $2); }
     | R_TRUE                        { $$ = new Literal(@1.first_line, @1.first_column, true, TipoDato.BOOL); }
     | R_FALSE                       { $$ = new Literal(@1.first_line, @1.first_column, false, TipoDato.BOOL); }
+    ;
+
+ListaAtributosStruct
+    : ListaAtributosStruct AtributoStruct { $1.push($2); $$ = $1; }
+    | AtributoStruct { $$ = [$1]; }
+    ;
+
+AtributoStruct
+    : Tipo ID PTCOMA { $$ = { id: $2, tipo: $1 }; }
+    | Tipo ID %prec FIN { $$ = { id: $2, tipo: $1 }; }
+    ;
+
+ListaValoresStruct
+    : ListaValores { $$ = $1; }
+    | /* EPSILON */ { $$ = []; }
+    ;
+
+ListaValores
+    : ListaValores COMA ValorStruct { $1.push($3); $$ = $1; }
+    | ValorStruct { $$ = [$1]; }
+    ;
+
+ValorStruct
+    : ID DOS_PUNTOS Expresion { $$ = { id: $1, valor: $3 }; }
     ;

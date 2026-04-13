@@ -4,17 +4,21 @@ import { Entorno } from './entorno/Entorno';
 
 // sentencias de GoScript reales
 const entrada = `
-fmt.Println("--- FUNCIONES DE SLICE ---");
+fmt.Println("--- PRUEBA DE STRUCTS ---");
 
-var numeros []int = []int{10, 20, 30, 40};
-fmt.Println("Longitud del slice numeros:", len(numeros));
-fmt.Println("Buscando el valor 30 (Indice):", slices.Index(numeros, 30));
+struct Persona {
+    string Nombre;
+    int Edad;
+    bool EsEstudiante;
+}
 
-numeros = append(numeros, 50);
-fmt.Println("Slice despues de append:", numeros);
+Persona miInstancia = { Nombre: "Alice", Edad: 25, EsEstudiante: false };
+fmt.Println("Objeto original:", miInstancia);
 
-var palabras []string = []string{"hola", "mundo", "goScript"};
-fmt.Println("Join de palabras:", strings.Join(palabras, "-"));
+fmt.Println("Accediendo al nombre:", miInstancia.Nombre);
+
+miInstancia.Edad = 30;
+fmt.Println("Accediendo a la edad modificada:", miInstancia.Edad);
 `;
 
 try {

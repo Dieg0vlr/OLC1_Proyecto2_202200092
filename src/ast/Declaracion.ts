@@ -30,7 +30,6 @@ export class Declaracion implements Instruccion {
         // valido tipos (GoScript permite asignar int a float64)
         if (this.tipoDato !== valorInterpretado.tipo) {
             if (this.tipoDato === TipoDato.FLOAT && valorInterpretado.tipo === TipoDato.INT) {
-                // Casteo automatico de Int a Float
                 valorInterpretado.tipo = TipoDato.FLOAT;
             } else {
                 arbol.agregarError("Semantico", "El tipo asignado no coincide con la variable " + this.id, this.linea, this.columna);

@@ -4,5 +4,7 @@ export enum TipoDato {
     STRING,
     BOOL,
     RUNE,
-    NULO
+    NULO,
+    STRUCT, 
+    ANY
 }
