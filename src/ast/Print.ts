@@ -14,20 +14,28 @@ export class Print implements Instruccion {
 
     interpretar(entorno: Entorno, arbol: any): any {
         let salida = "";
-
-        this.expresiones.forEach((exp, index) => {
+        
+        for (const exp of this.expresiones) {
             const resultado = exp.interpretar(entorno, arbol);
-            let valorAImprimir = resultado.valor;
+            
+            if (resultado && typeof resultado.valor === 'object' && !Array.isArray(resultado.valor) && resultado.valor !== null) {
+                const nombreStruct = resultado.valor.tipo_struct_oculto || "Struct";
+                const atributos = Object.keys(resultado.valor)
+                    .filter(key => key !== 'tipo_struct_oculto')
+                    .map(key => `${key}: ${resultado.valor[key]}`);
+                
 
-            // Si es un arreglo (Slice), le pongo formato de GoScript
-            if (Array.isArray(valorAImprimir)) {
-                valorAImprimir = "[" + valorAImprimir.join(" ") + "]";
+                salida += `${nombreStruct}(${atributos.join(", ")}) `;
+            } 
+ 
+            else if (resultado && Array.isArray(resultado.valor)) {
+                salida += `[${resultado.valor.join(" ")}] `;
+            } 
+            else {
+                salida += resultado?.valor + " ";
             }
-
-            salida += String(valorAImprimir) + (index === this.expresiones.length - 1 ? "" : " ");
-        });
-
-        console.log(salida);
-        return null;
+        }
+        
+        console.log(salida.trimEnd());
     }
 }

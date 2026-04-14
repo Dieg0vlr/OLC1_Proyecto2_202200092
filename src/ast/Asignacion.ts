@@ -1,40 +1,33 @@
 import { Instruccion } from './Instruccion';
 import { Entorno } from '../entorno/Entorno';
-import { Simbolo } from '../entorno/Simbolo';
 import { TipoDato } from '../entorno/Tipo';
 
 export class Asignacion implements Instruccion {
-    public linea: number;
-    public columna: number;
-    public id: string;
-    public expresion: Instruccion;
-
-    constructor(linea: number, columna: number, id: string, expresion: Instruccion) {
-        this.linea = linea;
-        this.columna = columna;
-        this.id = id;
-        this.expresion = expresion;
-    }
+    constructor(public linea: number, public columna: number, public id: string, public expresion: Instruccion) {}
 
     interpretar(entorno: Entorno, arbol: any): any {
-        const simboloActual = entorno.obtener(this.id);
-        
-        if (!simboloActual) {
-            arbol.agregarError("Semantico", "La variable '" + this.id + "' no existe y no se puede reasignar", this.linea, this.columna);
+        const simbolo = entorno.obtener(this.id);
+        if (!simbolo) {
+            arbol.agregarError("Semantico", `Variable '${this.id}' no encontrada.`, this.linea, this.columna);
             return;
         }
 
-        const nuevoValor = this.expresion.interpretar(entorno, arbol);
+        const valEvaluado = this.expresion.interpretar(entorno, arbol);
 
-        if (simboloActual.tipo !== nuevoValor.tipo) {
-            if (simboloActual.tipo === TipoDato.FLOAT && nuevoValor.tipo === TipoDato.INT) {
-                nuevoValor.tipo = TipoDato.FLOAT;
+        if (simbolo.tipo !== valEvaluado.tipo) {    
+            const esSliceOStruct = (typeof simbolo.tipo === 'string') || (simbolo.tipo === TipoDato.STRUCT);
+            
+            if (valEvaluado.tipo === TipoDato.NULO && esSliceOStruct) {
+                // Todo en orden, dejamos pasar el nil
+            } 
+            else if (simbolo.tipo === TipoDato.FLOAT && valEvaluado.tipo === TipoDato.INT) {
+                valEvaluado.valor = parseFloat(valEvaluado.valor); 
             } else {
-                arbol.agregarError("Semantico", "Tipo de dato incorrecto al reasignar la variable '" + this.id + "'", this.linea, this.columna);
+                arbol.agregarError("Semantico", `Tipo de dato incorrecto al reasignar la variable '${this.id}'`, this.linea, this.columna);
                 return;
             }
         }
-        const nuevoSimbolo = new Simbolo(this.id, nuevoValor.valor, simboloActual.tipo);
-        entorno.actualizar(this.id, nuevoSimbolo);
+
+        simbolo.valor = valEvaluado.valor;
     }
 }

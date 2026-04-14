@@ -3,18 +3,18 @@ import { Entorno } from '../entorno/Entorno';
 import { TipoDato } from '../entorno/Tipo';
 
 export class SlicesIndex implements Instruccion {
-    constructor(public linea: number, public columna: number, public slice: Instruccion, public valorBuscado: Instruccion) {}
+    constructor(public linea: number, public columna: number, public expresionSlice: Instruccion, public expresionValor: Instruccion) {}
 
     interpretar(entorno: Entorno, arbol: any): any {
-        const arr = this.slice.interpretar(entorno, arbol);
-        const val = this.valorBuscado.interpretar(entorno, arbol);
+        const sliceVal = this.expresionSlice.interpretar(entorno, arbol);
+        const valorBuscado = this.expresionValor.interpretar(entorno, arbol);
 
-        if (!Array.isArray(arr.valor)) {
-            arbol.agregarError("Semantico", "slices.Index() requiere un Slice", this.linea, this.columna);
-            return { valor: -1, tipo: TipoDato.INT };
+        if (!Array.isArray(sliceVal.valor)) {
+            arbol.agregarError("Semantico", "slices.Index requiere un arreglo", this.linea, this.columna);
+            return { tipo: TipoDato.INT, valor: -1 };
         }
 
-        const index = arr.valor.indexOf(val.valor);
-        return { valor: index, tipo: TipoDato.INT };
+        const indice = sliceVal.valor.findIndex((v: any) => v === valorBuscado.valor);
+        return { tipo: TipoDato.INT, valor: indice };
     }
 }

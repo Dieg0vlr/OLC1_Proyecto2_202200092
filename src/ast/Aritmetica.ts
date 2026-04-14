@@ -34,28 +34,54 @@ export class Aritmetica implements Instruccion {
             valorDer = this.expresionDerecha.interpretar(entorno, arbol);
         }
 
+        let operarComoBool = false;
+        if (valorIzq?.tipo === TipoDato.BOOL && valorDer?.tipo === TipoDato.BOOL) {
+            operarComoBool = true;
+        }
+
+        if (valorIzq && valorIzq.tipo === TipoDato.RUNE) valorIzq.tipo = TipoDato.INT;
+        if (valorDer && valorDer.tipo === TipoDato.RUNE) valorDer.tipo = TipoDato.INT;
+
+        if (valorIzq && valorIzq.tipo === TipoDato.BOOL) {
+            valorIzq.valor = valorIzq.valor ? 1 : 0;
+            valorIzq.tipo = TipoDato.INT;
+        }
+        if (valorDer && valorDer.tipo === TipoDato.BOOL) {
+            valorDer.valor = valorDer.valor ? 1 : 0;
+            valorDer.tipo = TipoDato.INT;
+        }
+
         const tipoIzq = valorIzq?.tipo;
         const tipoDer = valorDer?.tipo;
         const valIzq = valorIzq?.valor;
         const valDer = valorDer?.valor;
 
+        let resultado = null;
+
         switch (this.operador) {
             case OperadorAritmetico.SUMA:
-                return this.operarSuma(valIzq, valDer, tipoIzq, tipoDer, arbol);
+                resultado = this.operarSuma(valIzq, valDer, tipoIzq, tipoDer, arbol); break;
             case OperadorAritmetico.RESTA:
-                return this.operarResta(valIzq, valDer, tipoIzq, tipoDer, arbol);
+                resultado = this.operarResta(valIzq, valDer, tipoIzq, tipoDer, arbol); break;
             case OperadorAritmetico.MULTIPLICACION:
-                return this.operarMultiplicacion(valIzq, valDer, tipoIzq, tipoDer, arbol);
+                resultado = this.operarMultiplicacion(valIzq, valDer, tipoIzq, tipoDer, arbol); break;
             case OperadorAritmetico.DIVISION:
-                return this.operarDivision(valIzq, valDer, tipoIzq, tipoDer, arbol);
+                resultado = this.operarDivision(valIzq, valDer, tipoIzq, tipoDer, arbol); break;
             case OperadorAritmetico.MODULO:
-                return this.operarModulo(valIzq, valDer, tipoIzq, tipoDer, arbol);
+                resultado = this.operarModulo(valIzq, valDer, tipoIzq, tipoDer, arbol); break;
             case OperadorAritmetico.NEGACION_UNARIA:
-                return this.operarNegacion(valIzq, tipoIzq, arbol);
+                resultado = this.operarNegacion(valIzq, tipoIzq, arbol); break;
             default:
                 arbol.agregarError("Semantico", "Operador aritmetico desconocido", this.linea, this.columna);
                 return { valor: null, tipo: TipoDato.NULO };
         }
+
+        if (operarComoBool && resultado && resultado.tipo === TipoDato.INT) {
+            resultado.tipo = TipoDato.BOOL;
+            resultado.valor = resultado.valor !== 0; // Convierte 1 a true y 0 a false
+        }
+
+        return resultado;
     }
 
     private operarSuma(valIzq: any, valDer: any, tipoIzq: TipoDato, tipoDer: TipoDato, arbol: any): any {
