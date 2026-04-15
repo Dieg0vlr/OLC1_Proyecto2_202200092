@@ -26,15 +26,17 @@ app.use(express.json());
 
 // ruta principal que recibira el codigo GoScript
 app.post('/ejecutar', (req, res) => {
-    // extrae el codigo que nos mandara la pagina web
     const { codigo } = req.body; 
+
+    (global as any).erroresScanner = [];
 
     try {
         const ast = parser.parse(codigo);
         const entornoGlobal = new Entorno(null);
-        const errores: any[] = [];
         
-        // Simulador para atrapar errores y mandarlos a la web
+        // Rescata todos los errores lexicos 
+        const errores: any[] = (global as any).erroresScanner || [];
+        
         const arbolSimulado = {
             agregarError: (tipo: string, desc: string, linea: number, col: number) => {
                 errores.push({ tipo, descripcion: desc, linea, columna: col });
@@ -47,14 +49,10 @@ app.post('/ejecutar', (req, res) => {
             consolaSalida += args.join(" ") + "\n";
         };
 
-        // PRIMERA PASADA: Guardar structs, funciones y variables globales
         ast.forEach((instruccion: any) => {
-            if (instruccion.tipo !== 'MAIN') {
-                instruccion.interpretar(entornoGlobal, arbolSimulado);
-            }
+            if (instruccion.tipo !== 'MAIN') instruccion.interpretar(entornoGlobal, arbolSimulado);
         });
 
-        // SEGUNDA PASADA: Buscar y ejecutar el MAIN
         ast.forEach((instruccion: any) => {
             if (instruccion.tipo === 'MAIN') {
                 for (const inst of instruccion.instrucciones) {
@@ -65,26 +63,33 @@ app.post('/ejecutar', (req, res) => {
 
         console.log = logOriginal;
 
-        // genera el codigo DOT de Graphviz
         const generador = new GeneradorAST();
         const codigoGraphviz = generador.generar(ast);
 
-        // se junta todo y se lo responde a la pagina web
         res.json({
             exito: true,
             consola: consolaSalida,
-            errores: errores,
+            errores: errores, // manda todos los errores recolectados
             simbolos: Array.from(entornoGlobal.tabla.entries()),
-            ast: codigoGraphviz // envia el texto del arbol a la web
+            ast: codigoGraphviz 
         });
 
-    } catch (error: any) {
-        // Si Jison explota por un error sintactico aca se vra
-        console.error("Error critico en el servidor:", error);
-        res.status(500).json({ 
-            exito: false, 
-            mensaje: "Error de compilacion", 
-            detalle: error.message 
+    } catch (err: any) {
+        //Si hubo un error SINTACTICO 
+        const errores = (global as any).erroresScanner || [];
+
+        errores.push({
+            tipo: "Sintactico",
+            descripcion: err.message.split('\n')[0] || "Error de sintaxis", 
+            linea: err.hash?.loc?.first_line || 1,    
+            columna: err.hash?.loc?.first_column || 1 
+        });
+
+        res.json({
+            exito: false,
+            detalle: "Ocurrieron errores durante el analisis",
+            errores: errores, 
+            simbolos: []
         });
     }
 });

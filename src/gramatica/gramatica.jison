@@ -23,7 +23,7 @@
 "if"                  return 'R_IF';
 "else"                return 'R_ELSE';
 "for"                 return 'R_FOR';
-"return"              return 'R_RETURN'; /* <--- ¡AQUI ESTABA EL ERROR! FALTABA ESTO */
+"return"              return 'R_RETURN';
 "break"               return 'R_BREAK';
 "continue"            return 'R_CONTINUE';
 "switch"              return 'R_SWITCH';
@@ -78,7 +78,10 @@
 [a-zA-Z_][a-zA-Z0-9_]* return 'ID';
 
 <<EOF>>               return 'EOF';
-.                     { console.error('Error lexico: ' + yytext + ' linea ' + yylloc.first_line); }
+.  { 
+    if (!(global).erroresScanner) (global).erroresScanner = [];
+    (global).erroresScanner.push({ tipo: 'Lexico', descripcion: 'Caracter invalido: ' + yytext, linea: yylloc.first_line, columna: yylloc.first_column }); 
+}
 
 /lex
 

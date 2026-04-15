@@ -194,10 +194,14 @@
                 if (data.exito) {
                     consola.value = data.consola;
                     dotAstGlobal = data.ast;
-                    document.getElementById('texto-ast').value = data.ast; // LLENA LA CAJA DE TEXTO DEL AST
+                    document.getElementById('texto-ast').value = data.ast;
                     llenarTablas(data);
                 } else {
-                    consola.value = "ERROR:\n" + data.detalle;
+                    consola.value = "ERROR DETECTADO:\n" + data.detalle;
+                    
+                    if (data.errores && data.errores.length > 0) {
+                        llenarTablas({ errores: data.errores, simbolos: [] });
+                    }
                 }
             } catch (e) { consola.value = "Error de conexion."; }
         }

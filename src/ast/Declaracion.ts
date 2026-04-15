@@ -10,7 +10,6 @@ export class Declaracion implements Instruccion {
         let tipoFinal = this.tipo;
 
         if (this.valor !== null) {
-            //Declaración con valor 
             const valEvaluado = this.valor.interpretar(entorno, arbol);
             valFinal = valEvaluado.valor;
             

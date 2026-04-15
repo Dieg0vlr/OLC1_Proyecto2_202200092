@@ -1,12 +1,9 @@
 export interface Instruccion {
-    /**
-     * El numero de linea donde se encuentra la instrucción (útil para reportar errores)
-     */
+    
+    // El numero de linea donde se encuentra la instruccion es utl para reportar errores
     linea: number;
     
-    /**
-     * La columna donde se encuentra la instruccion
-     */
+    //La columna donde se encuentra la instruccion
     columna: number;
 
     /**

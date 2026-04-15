@@ -973,7 +973,7 @@ case 16:return 42;
 break;
 case 17:return 43;
 break;
-case 18:return 32; /* <--- ¡AQUI ESTABA EL ERROR! FALTABA ESTO */
+case 18:return 32;
 break;
 case 19:return 36;
 break;
@@ -1075,7 +1075,10 @@ case 67:return 14;
 break;
 case 68:return 5;
 break;
-case 69: console.error('Error lexico: ' + yy_.yytext + ' linea ' + yy_.yylloc.first_line); 
+case 69: 
+    if (!(global).erroresScanner) (global).erroresScanner = [];
+    (global).erroresScanner.push({ tipo: 'Lexico', descripcion: 'Caracter invalido: ' + yy_.yytext, linea: yy_.yylloc.first_line, columna: yy_.yylloc.first_column }); 
+
 break;
 }
 },

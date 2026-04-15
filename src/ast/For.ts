@@ -44,7 +44,7 @@ export class For implements Instruccion {
                     break;
                 }
                 if (resultado?.tipo === 'CONTINUE') {
-                    break; // Rompe las instrucciones actuales y pasa al incremento
+                    break;
                 }
             }
 

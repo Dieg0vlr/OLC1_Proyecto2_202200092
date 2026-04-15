@@ -12,7 +12,7 @@ export class DeclaracionStruct implements Instruccion {
     ) {}
 
     interpretar(entorno: Entorno, arbol: any): any {
-        // Guardamos la plantilla en el entorno con un nombre especial
+        // guarda la plantilla en el entorno con un nombre especifico
         const simboloStruct = new Simbolo(this.id + "_plantilla", this.atributos, TipoDato.STRUCT);
         entorno.guardar(this.id + "_plantilla", simboloStruct);
     }
