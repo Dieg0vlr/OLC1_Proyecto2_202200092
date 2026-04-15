@@ -23,6 +23,7 @@
 "if"                  return 'R_IF';
 "else"                return 'R_ELSE';
 "for"                 return 'R_FOR';
+"return"              return 'R_RETURN'; /* <--- ¡AQUI ESTABA EL ERROR! FALTABA ESTO */
 "break"               return 'R_BREAK';
 "continue"            return 'R_CONTINUE';
 "switch"              return 'R_SWITCH';
@@ -178,6 +179,10 @@ Instruccion
     | R_STRUCT ID LLAVE_A ListaAtributosStruct LLAVE_C { $$ = new DeclaracionStruct(@1.first_line, @1.first_column, $2, $4); }
     | ID PUNTO ID IGUAL Expresion PTCOMA { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1, $3, $5); }
     | ID PUNTO ID IGUAL Expresion %prec FIN { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1, $3, $5); }
+    | ID PUNTO ID MAS_IGUAL Expresion PTCOMA { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1, $3, new Aritmetica(@1.first_line, @1.first_column, OperadorAritmetico.SUMA, new AccesoStruct(@1.first_line, @1.first_column, $1, $3), $5)); }
+    | ID PUNTO ID MAS_IGUAL Expresion %prec FIN { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1, $3, new Aritmetica(@1.first_line, @1.first_column, OperadorAritmetico.SUMA, new AccesoStruct(@1.first_line, @1.first_column, $1, $3), $5)); }
+    | ID PUNTO ID MENOS_IGUAL Expresion PTCOMA { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1, $3, new Aritmetica(@1.first_line, @1.first_column, OperadorAritmetico.RESTA, new AccesoStruct(@1.first_line, @1.first_column, $1, $3), $5)); }
+    | ID PUNTO ID MENOS_IGUAL Expresion %prec FIN { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1, $3, new Aritmetica(@1.first_line, @1.first_column, OperadorAritmetico.RESTA, new AccesoStruct(@1.first_line, @1.first_column, $1, $3), $5)); }
     | ID ID IGUAL LLAVE_A ListaValoresStruct LLAVE_C PTCOMA { $$ = new Declaracion(@1.first_line, @1.first_column, $2, TipoDato.STRUCT, new InstanciaStruct(@1.first_line, @1.first_column, $1, $5)); }
     | ID ID IGUAL LLAVE_A ListaValoresStruct LLAVE_C %prec FIN { $$ = new Declaracion(@1.first_line, @1.first_column, $2, TipoDato.STRUCT, new InstanciaStruct(@1.first_line, @1.first_column, $1, $5)); }
     | ID PAR_A ListaExpresiones PAR_C PTCOMA { $$ = new LlamadaFuncion(@1.first_line, @1.first_column, $1, $3); }

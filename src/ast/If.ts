@@ -29,7 +29,7 @@ export class If implements Instruccion {
             const entornoLocal = new Entorno(entorno);
             for (const instruccion of this.instruccionesIf) {
                 const res = instruccion.interpretar(entornoLocal, arbol);
-                if (res?.tipo === 'BREAK' || res?.tipo === 'CONTINUE' || res?.tipo === 'RETURN') return res;
+                if (res !== null && res !== undefined) return res;
             }
         } else if (this.instruccionesElse !== null) {
             if (this.instruccionesElse instanceof If) {
@@ -38,11 +38,9 @@ export class If implements Instruccion {
                 const entornoLocal = new Entorno(entorno);
                 for (const instruccion of this.instruccionesElse as Instruccion[]) {
                     const res = instruccion.interpretar(entornoLocal, arbol);
-                    if (res?.tipo === 'BREAK' || res?.tipo === 'CONTINUE' || res?.tipo === 'RETURN') return res;
+                    if (res !== null && res !== undefined) return res;
                 }
             }
         }
     }
-
-
 }

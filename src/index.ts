@@ -8,71 +8,88 @@ import { TypeOf } from './ast/TypeOf';
 import { DeclaracionFuncion } from './ast/DeclaracionFuncion';
 import { LlamadaFuncion } from './ast/LlamadaFuncion';
 import { Return } from './ast/Return';
+import express from 'express';
+import cors from 'cors';
+import { Entorno } from './entorno/Entorno';
+import { GeneradorAST } from './ast/GeneradorAST';
 
 declare var require: any;
 const parser = require('./gramatica/gramatica.js');
-import { Entorno } from './entorno/Entorno';
 
-// sentencias de GoScript reales
-const entrada = `
-struct Persona {
-    string Nombre;
-    int Edad;
-}
 
-func main() {
-    fmt.Println("--- PRUEBA DE JEFES OCULTOS ---");
-    
-    // 1. Bloques Independientes (Ámbitos anónimos)
-    {
-        var temporal string = "Esta variable vive en un bloque fantasma";
-        fmt.Println(temporal);
-    }
+// inicia el servidor
+const app = express();
+const PORT = 3000;
 
-    // 2. Funciones Nativas de Slices
-    numeros := []int{10, 20, 30, 40, 50};
-    palabras := []string{"Hola", "Mundo", "GoScript"};
-    
-    fmt.Println("Buscando el 30:", slices.Index(numeros, 30)); 
-    fmt.Println("Buscando el 100:", slices.Index(numeros, 100)); 
-    fmt.Println("Join de strings:", strings.Join(palabras, " <-> ")); 
+app.use(cors()); 
+app.use(express.json()); 
 
-    // 3. Formato Estricto de Structs
-    p := Persona{Nombre: "Alice", Edad: 25};
-    fmt.Println("Imprimiendo mi struct:", p); 
-}
-`;
+// ruta principal que recibira el codigo GoScript
+app.post('/ejecutar', (req, res) => {
+    // extrae el codigo que nos mandara la pagina web
+    const { codigo } = req.body; 
 
-try {
-    const ast = parser.parse(entrada);
-    const entornoGlobal = new Entorno(null);
-    const arbolSimulado = {
-        agregarError: (tipo: string, desc: string, linea: number, col: number) => {
-            console.error(`[ERROR ${tipo}] ${desc} en L:${linea} C:${col}`);
-        }
-    };
-
-    console.log("--- Ejecutando AST ---");
-
-    // PRIMERA PASADA: Guardar todas las declaraciones globales y funciones
-    ast.forEach((instruccion: any) => {
-        if (instruccion.tipo !== 'MAIN') {
-            instruccion.interpretar(entornoGlobal, arbolSimulado);
-        }
-    });
-
-    // SEGUNDA PASADA: Buscar la funcion MAIN y ejecutarla
-    ast.forEach((instruccion: any) => {
-        if (instruccion.tipo === 'MAIN') {
-            for (const inst of instruccion.instrucciones) {
-                inst.interpretar(entornoGlobal, arbolSimulado);
+    try {
+        const ast = parser.parse(codigo);
+        const entornoGlobal = new Entorno(null);
+        const errores: any[] = [];
+        
+        // Simulador para atrapar errores y mandarlos a la web
+        const arbolSimulado = {
+            agregarError: (tipo: string, desc: string, linea: number, col: number) => {
+                errores.push({ tipo, descripcion: desc, linea, columna: col });
             }
-        }
-    });
+        };
 
-    console.log("\n--- Memoria (Tabla de Simbolos) ---");
-    console.log(entornoGlobal.tabla);
+        let consolaSalida = "";
+        const logOriginal = console.log;
+        console.log = (...args) => {
+            consolaSalida += args.join(" ") + "\n";
+        };
 
-} catch (error) {
-    console.log(error);
-}
+        // PRIMERA PASADA: Guardar structs, funciones y variables globales
+        ast.forEach((instruccion: any) => {
+            if (instruccion.tipo !== 'MAIN') {
+                instruccion.interpretar(entornoGlobal, arbolSimulado);
+            }
+        });
+
+        // SEGUNDA PASADA: Buscar y ejecutar el MAIN
+        ast.forEach((instruccion: any) => {
+            if (instruccion.tipo === 'MAIN') {
+                for (const inst of instruccion.instrucciones) {
+                    inst.interpretar(entornoGlobal, arbolSimulado);
+                }
+            }
+        });
+
+        console.log = logOriginal;
+
+        // genera el codigo DOT de Graphviz
+        const generador = new GeneradorAST();
+        const codigoGraphviz = generador.generar(ast);
+
+        // se junta todo y se lo responde a la pagina web
+        res.json({
+            exito: true,
+            consola: consolaSalida,
+            errores: errores,
+            simbolos: Array.from(entornoGlobal.tabla.entries()),
+            ast: codigoGraphviz // envia el texto del arbol a la web
+        });
+
+    } catch (error: any) {
+        // Si Jison explota por un error sintactico aca se vra
+        console.error("Error critico en el servidor:", error);
+        res.status(500).json({ 
+            exito: false, 
+            mensaje: "Error de compilacion", 
+            detalle: error.message 
+        });
+    }
+});
+
+
+app.listen(PORT, () => {
+    console.log(`API de GoScript lista y escuchando en http://localhost:${PORT}`);
+});

@@ -9,7 +9,7 @@ export class Bloque implements Instruccion {
         
         for (const inst of this.instrucciones) {
             const resultado = inst.interpretar(entornoLocal, arbol);
-            if (resultado) return resultado; 
+            if (resultado !== null && resultado !== undefined) return resultado; 
         }
     }
 }

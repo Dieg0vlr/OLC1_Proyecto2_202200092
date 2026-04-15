@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>GoScript IDE Profesional</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://unpkg.com/@hpcc-js/wasm@2.13.0/dist/index.min.js"></script>
+    <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #1e1e1e; color: #d4d4d4; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 95vh; }
+        .toolbar { margin-bottom: 10px; display: flex; gap: 8px; }
+        button { background-color: #0e639c; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 3px; font-size: 13px;}
+        button:hover { background-color: #1177bb; }
+        
+        /* Pestañas de archivos */
+        .tabs-container { display: flex; background-color: #2d2d2d; overflow-x: auto; border-bottom: 1px solid #3c3c3c; }
+        .file-tab { padding: 8px 15px; cursor: pointer; background-color: #2d2d2d; border-right: 1px solid #1e1e1e; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .file-tab.active { background-color: #1e1e1e; border-bottom: 2px solid #0e639c; color: white; }
+        .close-tab { color: #858585; font-weight: bold; cursor: pointer; }
+        .close-tab:hover { color: #f44336; }
+
+        /* Contenedor del Editor con Numeros de Linea */
+        .editor-wrapper { display: flex; flex: 1; background-color: #1e1e1e; border: 1px solid #3c3c3c; position: relative; overflow: hidden; }
+        .line-numbers { width: 40px; background-color: #1e1e1e; color: #858585; text-align: right; padding: 15px 5px; font-family: monospace; font-size: 16px; border-right: 1px solid #3c3c3c; user-select: none; line-height: 1.5; }
+        textarea#editor { flex: 1; background: transparent; color: #d4d4d4; border: none; padding: 15px; font-family: monospace; font-size: 16px; resize: none; outline: none; line-height: 1.5; overflow-y: auto; white-space: pre; }
+
+        /* Reportes y Paneles */
+        .nav-tabs { display: flex; gap: 10px; margin: 10px 0; }
+        .tab { cursor: pointer; padding: 5px 10px; color: #858585; }
+        .tab.active { color: white; border-bottom: 2px solid #0e639c; }
+        .panel { display: none; flex: 1; flex-direction: column; overflow: auto; }
+        .panel.active { display: flex; }
+        
+        .main-layout { display: flex; gap: 20px; flex: 1; min-height: 0; }
+        .console-container { flex: 0.4; display: flex; flex-direction: column; }
+        textarea#consola { flex: 1; background-color: #000; color: #00ff00; padding: 10px; font-family: monospace; border: 1px solid #3c3c3c; border-radius: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #3c3c3c; padding: 8px; text-align: left; font-size: 13px; }
+        th { background-color: #333; color: #4ec9b0; }
+        #grafo-ast { background: white; border-radius: 5px; min-height: 400px; }
+        #texto-ast { margin-top: 10px; background-color: #000; color: #d4d4d4; padding: 10px; font-family: monospace; border: 1px solid #3c3c3c; border-radius: 5px; height: 150px; }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="nuevoArchivo()">Nuevo Archivo</button>
+        <button onclick="abrirArchivo()">Abrir .gst</button>
+        <button onclick="guardarArchivo()">Guardar .gst</button>
+        <button onclick="ejecutarCodigo()" style="background-color: #28a745;">Ejecutar</button>
+    </div>
+
+    <div class="nav-tabs">
+        <div class="tab active" onclick="cambiarVista('panel-ide', this)">IDE</div>
+        <div class="tab" onclick="cambiarVista('panel-simbolos', this)">Simbolos</div>
+        <div class="tab" onclick="cambiarVista('panel-errores', this)">Errores</div>
+        <div class="tab" onclick="cambiarVista('panel-ast', this)">Arbol AST</div>
+    </div>
+
+    <div id="panel-ide" class="panel active">
+        <div class="tabs-container" id="tabs-bar"></div>
+        <div class="main-layout">
+            <div class="editor-wrapper">
+                <div class="line-numbers" id="line-numbers">1</div>
+                <textarea id="editor" oninput="actualizarLineas()" onscroll="sincronizarScroll()" spellcheck="false"></textarea>
+            </div>
+            <div class="console-container">
+                <h3>Consola</h3>
+                <textarea id="consola" readonly></textarea>
+                <p id="cursor-pos" style="font-size: 12px; color: #858585;">Linea: 1, Columna: 1</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="panel-simbolos" class="panel">
+        <h3>Tabla de Simbolos</h3>
+        <table>
+            <thead><tr><th>ID</th><th>Tipo Simbolo</th><th>Tipo Dato</th></tr></thead>
+            <tbody id="body-simbolos"></tbody>
+        </table>
+    </div>
+
+    <div id="panel-errores" class="panel">
+        <h3>Reporte de Errores</h3>
+        <table>
+            <thead><tr><th>Tipo</th><th>Descripcion</th><th>Linea</th><th>Columna</th></tr></thead>
+            <tbody id="body-errores"></tbody>
+        </table>
+    </div>
+
+    <div id="panel-ast" class="panel">
+        <h3>Arbol AST</h3>
+        <div id="grafo-ast"></div>
+        <h4>Codigo Graphviz (Copia y pega en GraphvizOnline)</h4>
+        <textarea id="texto-ast" readonly></textarea>
+    </div>
+
+    <script>
+        let archivos = []; 
+        let archivoActualIdx = -1;
+        let dotAstGlobal = "";
+
+        nuevoArchivo();
+
+        function nuevoArchivo() {
+            const nuevo = { nombre: `archivo${archivos.length + 1}.gst`, contenido: "func main() {\n\t\n}" };
+            archivos.push(nuevo);
+            seleccionarArchivo(archivos.length - 1);
+            renderizarTabs();
+        }
+
+        function seleccionarArchivo(idx) {
+            if (archivoActualIdx !== -1 && archivos[archivoActualIdx]) {
+                archivos[archivoActualIdx].contenido = document.getElementById('editor').value;
+            }
+            archivoActualIdx = idx;
+            document.getElementById('editor').value = archivos[idx].contenido;
+            actualizarLineas();
+            renderizarTabs();
+        }
+
+        function renderizarTabs() {
+            const bar = document.getElementById('tabs-bar');
+            bar.innerHTML = "";
+            archivos.forEach((file, idx) => {
+                const div = document.createElement('div');
+                div.className = `file-tab ${idx === archivoActualIdx ? 'active' : ''}`;
+                div.innerHTML = `<span onclick="seleccionarArchivo(${idx})">${file.nombre}</span> 
+                                 <span class="close-tab" onclick="cerrarArchivo(${idx}, event)">×</span>`;
+                bar.appendChild(div);
+            });
+        }
+
+        function cerrarArchivo(idx, event) {
+            event.stopPropagation();
+            archivos.splice(idx, 1);
+            if (archivos.length === 0) nuevoArchivo();
+            else seleccionarArchivo(0);
+        }
+
+        function actualizarLineas() {
+            const textarea = document.getElementById('editor');
+            const lineNumbers = document.getElementById('line-numbers');
+            const lines = textarea.value.split('\n').length;
+            let res = "";
+            for (let i = 1; i <= lines; i++) res += i + "<br>";
+            lineNumbers.innerHTML = res;
+            actualizarCursorPos();
+        }
+
+        function sincronizarScroll() {
+            const textarea = document.getElementById('editor');
+            const lineNumbers = document.getElementById('line-numbers');
+            lineNumbers.scrollTop = textarea.scrollTop;
+        }
+
+        function actualizarCursorPos() {
+            const textarea = document.getElementById('editor');
+            const textBefore = textarea.value.substring(0, textarea.selectionStart);
+            const lines = textBefore.split('\n');
+            document.getElementById('cursor-pos').innerText = `Linea: ${lines.length}, Columna: ${lines[lines.length - 1].length + 1}`;
+        }
+
+        document.getElementById('editor').addEventListener('keyup', actualizarCursorPos);
+        document.getElementById('editor').addEventListener('click', actualizarCursorPos);
+
+        function cambiarVista(id, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+            
+            // Renderiza el grafo 
+            if (id === 'panel-ast' && dotAstGlobal) {
+                try {
+                    d3.select("#grafo-ast").graphviz().renderDot(dotAstGlobal);
+                } catch(e) { console.log("Graphviz renderizado fallido por CORS, usa la caja de texto."); }
+            }
+        }
+
+        async function ejecutarCodigo() {
+            const codigo = document.getElementById('editor').value;
+            const consola = document.getElementById('consola');
+            consola.value = "Procesando...";
+
+            try {
+                const res = await fetch('http://localhost:3000/ejecutar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codigo })
+                });
+                const data = await res.json();
+                if (data.exito) {
+                    consola.value = data.consola;
+                    dotAstGlobal = data.ast;
+                    document.getElementById('texto-ast').value = data.ast; // LLENA LA CAJA DE TEXTO DEL AST
+                    llenarTablas(data);
+                } else {
+                    consola.value = "ERROR:\n" + data.detalle;
+                }
+            } catch (e) { consola.value = "Error de conexion."; }
+        }
+
+        function llenarTablas(data) {
+            // Llenar Errores
+            const errBody = document.getElementById('body-errores');
+            errBody.innerHTML = data.errores.map(e => `<tr><td>${e.tipo}</td><td>${e.descripcion}</td><td>${e.linea}</td><td>${e.columna}</td></tr>`).join('');
+            
+            // TRADUCTOR DE ENUMS A TEXTO PARA LA TABLA DE SIMBOLOS
+            const traductorTipos = {
+                0: "int",
+                1: "float64",
+                2: "string",
+                3: "bool",
+                4: "rune",
+                5: "nulo",
+                6: "struct",
+                7: "funcion / slice"
+            };
+
+            const simBody = document.getElementById('body-simbolos');
+            simBody.innerHTML = data.simbolos.map(s => {
+                let tipoNumero = s[1].tipo;
+                let tipoTexto = traductorTipos[tipoNumero] !== undefined ? traductorTipos[tipoNumero] : tipoNumero;
+                
+                return `<tr><td>${s[1].id}</td><td>Variable/Funcion</td><td>${tipoTexto}</td></tr>`;
+            }).join('');
+        }
+
+        function abrirArchivo() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    archivos.push({ nombre: file.name, contenido: event.target.result });
+                    seleccionarArchivo(archivos.length - 1);
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function guardarArchivo() {
+            const blob = new Blob([document.getElementById('editor').value], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = archivos[archivoActualIdx].nombre;
+            a.click();
+        }
+    </script>
+</body>
+</html>
