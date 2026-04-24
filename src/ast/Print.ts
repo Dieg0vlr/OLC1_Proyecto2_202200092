@@ -13,6 +13,12 @@ export class Print implements Instruccion {
     }
 
     interpretar(entorno: Entorno, arbol: any): any {
+
+        if (this.expresiones.length === 0) {
+            console.log(""); 
+            return null;
+        }
+        
         let salida = "";
         
         for (const exp of this.expresiones) {
@@ -24,10 +30,8 @@ export class Print implements Instruccion {
                     .filter(key => key !== 'tipo_struct_oculto')
                     .map(key => `${key}: ${resultado.valor[key]}`);
                 
-
                 salida += `${nombreStruct}(${atributos.join(", ")}) `;
             } 
- 
             else if (resultado && Array.isArray(resultado.valor)) {
                 salida += `[${resultado.valor.join(" ")}] `;
             } 

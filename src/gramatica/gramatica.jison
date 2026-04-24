@@ -209,6 +209,8 @@ Instruccion
     | ID MENOS_MENOS %prec FIN { $$ = new Incremento(@1.first_line, @1.first_column, $1, '--'); }
     | R_PRINT PAR_A ListaExpresiones PAR_C PTCOMA { $$ = new Print(@1.first_line, @1.first_column, $3); }
     | R_PRINT PAR_A ListaExpresiones PAR_C %prec FIN { $$ = new Print(@1.first_line, @1.first_column, $3); }
+    | R_PRINT PAR_A PAR_C PTCOMA { $$ = new Print(@1.first_line, @1.first_column, []); }
+    | R_PRINT PAR_A PAR_C %prec FIN { $$ = new Print(@1.first_line, @1.first_column, []); }
     | LLAVE_A InstruccionesBloque LLAVE_C { $$ = new Bloque(@1.first_line, @1.first_column, $2); }
     ;
 
