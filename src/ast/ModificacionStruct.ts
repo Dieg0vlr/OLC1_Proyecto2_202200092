@@ -13,15 +13,29 @@ export class ModificacionStruct implements Instruccion {
             return;
         }
 
-        const instancia = simbolo.valor;
+        const atributos = this.atributo.split('.');
+        let objetivo: any = simbolo.valor; 
+
+        for (let i = 0; i < atributos.length - 1; i++) {
+            const art = atributos[i] as string; 
+            
+            if (objetivo && typeof objetivo === 'object' && art in objetivo) {
+                objetivo = objetivo[art];
+            } else {
+                arbol.agregarError("Semantico", "El atributo '" + art + "' no existe en el struct", this.linea, this.columna);
+                return;
+            }
+        }
+
+        const ultimoAtributo = atributos[atributos.length - 1] as string; 
         
-         if (!(this.atributo in instancia)) {
-             arbol.agregarError("Semantico", "El atributo '" + this.atributo + "' no existe en el struct", this.linea, this.columna);
+        if (!objetivo || !(ultimoAtributo in objetivo)) {
+             arbol.agregarError("Semantico", "El atributo '" + ultimoAtributo + "' no existe en el struct", this.linea, this.columna);
              return;
         }
 
         const val = this.nuevoValor.interpretar(entorno, arbol);
         
-        instancia[this.atributo] = val.valor;
+        objetivo[ultimoAtributo] = val.valor;
     }
 }

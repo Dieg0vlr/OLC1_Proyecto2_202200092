@@ -75,6 +75,8 @@ app.post('/ejecutar', (req, res) => {
         });
 
     } catch (err: any) {
+
+        console.log("ERROR PRUEBA\n", err.message);
         //Si hubo un error SINTACTICO 
         const errores = (global as any).erroresScanner || [];
 

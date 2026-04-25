@@ -22,7 +22,19 @@
 
         /* Contenedor del Editor con Numeros de Linea */
         .editor-wrapper { display: flex; flex: 1; background-color: #1e1e1e; border: 1px solid #3c3c3c; position: relative; overflow: hidden; }
-        .line-numbers { width: 40px; background-color: #1e1e1e; color: #858585; text-align: right; padding: 15px 5px; font-family: monospace; font-size: 16px; border-right: 1px solid #3c3c3c; user-select: none; line-height: 1.5; }
+        .line-numbers { 
+            width: 40px; 
+            background-color: #1e1e1e; 
+            color: #858585; 
+            text-align: right; 
+            padding: 15px 5px; 
+            font-family: monospace; 
+            font-size: 16px; 
+            border-right: 1px solid #3c3c3c; 
+            user-select: none; 
+            line-height: 1.5; 
+            overflow-y: hidden;
+        }
         textarea#editor { flex: 1; background: transparent; color: #d4d4d4; border: none; padding: 15px; font-family: monospace; font-size: 16px; resize: none; outline: none; line-height: 1.5; overflow-y: auto; white-space: pre; }
 
         /* Reportes y Paneles */
