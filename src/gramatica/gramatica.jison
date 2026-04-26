@@ -175,13 +175,6 @@ Instruccion
     | ID ID IGUAL LLAVE_A ListaValoresStruct LLAVE_C PTCOMA { $$ = new Declaracion(@1.first_line, @1.first_column, $2, TipoDato.STRUCT, new InstanciaStruct(@1.first_line, @1.first_column, $1, $5)); }
     | ID ID IGUAL LLAVE_A ListaValoresStruct LLAVE_C %prec FIN { $$ = new Declaracion(@1.first_line, @1.first_column, $2, TipoDato.STRUCT, new InstanciaStruct(@1.first_line, @1.first_column, $1, $5)); }
 
-    | ID DOS_PUNTOS_IGUAL ID LLAVE_A ListaValoresStruct LLAVE_C PTCOMA { $$ = new Declaracion(@1.first_line, @1.first_column, $1, TipoDato.STRUCT, new InstanciaStruct(@1.first_line, @1.first_column, $3, $5)); }
-    | ID DOS_PUNTOS_IGUAL ID LLAVE_A ListaValoresStruct LLAVE_C %prec FIN { $$ = new Declaracion(@1.first_line, @1.first_column, $1, TipoDato.STRUCT, new InstanciaStruct(@1.first_line, @1.first_column, $3, $5)); }
-    | R_VAR ID Tipo IGUAL ID LLAVE_A ListaValoresStruct LLAVE_C PTCOMA { $$ = new Declaracion(@1.first_line, @1.first_column, $2, $3, new InstanciaStruct(@1.first_line, @1.first_column, $5, $7)); }
-    | R_VAR ID Tipo IGUAL ID LLAVE_A ListaValoresStruct LLAVE_C %prec FIN { $$ = new Declaracion(@1.first_line, @1.first_column, $2, $3, new InstanciaStruct(@1.first_line, @1.first_column, $5, $7)); }
-    | ID IGUAL ID LLAVE_A ListaValoresStruct LLAVE_C PTCOMA { $$ = new Asignacion(@1.first_line, @1.first_column, $1, new InstanciaStruct(@1.first_line, @1.first_column, $3, $5)); }
-    | ID IGUAL ID LLAVE_A ListaValoresStruct LLAVE_C %prec FIN { $$ = new Asignacion(@1.first_line, @1.first_column, $1, new InstanciaStruct(@1.first_line, @1.first_column, $3, $5)); }
-    
     | ID MAS_IGUAL Expresion PTCOMA { $$ = new AsignacionCompuesta(@1.first_line, @1.first_column, $1, $3, '+='); }
     | ID MAS_IGUAL Expresion %prec FIN { $$ = new AsignacionCompuesta(@1.first_line, @1.first_column, $1, $3, '+='); }
     | ID MENOS_IGUAL Expresion PTCOMA { $$ = new AsignacionCompuesta(@1.first_line, @1.first_column, $1, $3, '-='); }
@@ -192,7 +185,6 @@ Instruccion
     | ID CORCHE_A Expresion CORCHE_C IGUAL Expresion %prec FIN { $$ = new ModificacionSlice(@1.first_line, @1.first_column, $1, $3, $6); }
     | R_STRUCT ID LLAVE_A ListaAtributosStruct LLAVE_C { $$ = new DeclaracionStruct(@1.first_line, @1.first_column, $2, $4); }
     
-    // STRUCTS - MULTIPLES NIVELES
     | AccesoAtributo IGUAL Expresion PTCOMA { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1.split('.')[0], $1.substring($1.indexOf('.')+1), $3); }
     | AccesoAtributo IGUAL Expresion %prec FIN { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1.split('.')[0], $1.substring($1.indexOf('.')+1), $3); }
     | AccesoAtributo MAS_IGUAL Expresion PTCOMA { $$ = new ModificacionStruct(@1.first_line, @1.first_column, $1.split('.')[0], $1.substring($1.indexOf('.')+1), new Aritmetica(@1.first_line, @1.first_column, OperadorAritmetico.SUMA, new AccesoStruct(@1.first_line, @1.first_column, $1.split('.')[0], $1.substring($1.indexOf('.')+1)), $3)); }
@@ -308,6 +300,7 @@ Expresion
     | CORCHE_A CORCHE_C Tipo LLAVE_A LLAVE_C { $$ = new Slice(@1.first_line, @1.first_column, $3, []); }
     | ID CORCHE_A Expresion CORCHE_C CORCHE_A Expresion CORCHE_C { $$ = new AccesoSlice2D(@1.first_line, @1.first_column, $1, $3, $6); }
     | ID CORCHE_A Expresion CORCHE_C { $$ = new AccesoSlice(@1.first_line, @1.first_column, $1, $3); }
+    
     | AccesoAtributo { $$ = new AccesoStruct(@1.first_line, @1.first_column, $1.split('.')[0], $1.substring($1.indexOf('.')+1)); }
 
     | R_LEN PAR_A Expresion PAR_C { $$ = new Len(@1.first_line, @1.first_column, $3); }

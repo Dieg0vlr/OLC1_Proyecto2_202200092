@@ -98,5 +98,5 @@ app.post('/ejecutar', (req, res) => {
 
 
 app.listen(PORT, () => {
-    console.log(`API de GoScript lista y escuchando en http://localhost:${PORT}`);
+    console.log(`INICIANDO API en http://localhost:${PORT}`);
 });
